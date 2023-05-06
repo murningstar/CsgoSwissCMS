@@ -6,7 +6,7 @@ import fsAsync = require("fs/promises");
 import path from "path";
 import url from "url";
 import { Spot } from "../../CsgoSwiss/src/data/interfaces/Spot.js";
-import { Lineup } from "../../CsgoSwiss/src/data/intefraces/Lineup.js";
+import { Lineup } from "../../CsgoSwiss/src/data/interfaces/Lineup.js";
 import { CoordsObj } from "../../CsgoSwiss/src/data/types/GrenadeProperties.js";
 import mapListExport from "../../CsgoSwiss/src/data/maplist.js";
 
