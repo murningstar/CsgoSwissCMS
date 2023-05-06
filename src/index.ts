@@ -5,8 +5,8 @@ import fileUpload, { UploadedFile } from "express-fileupload";
 import fsAsync = require("fs/promises");
 import path from "path";
 import url from "url";
-import { Spot } from "../../CsgoSwiss/src/data/v2_spotSvyaz/Spot.js";
-import { Lineup } from "../../CsgoSwiss/src/data/v2_spotSvyaz/Lineup.js";
+import { Spot } from "../../CsgoSwiss/src/data/interfaces/Spot.js";
+import { Lineup } from "../../CsgoSwiss/src/data/intefraces/Lineup.js";
 import { CoordsObj } from "../../CsgoSwiss/src/data/types/GrenadeProperties.js";
 import mapListExport from "../../CsgoSwiss/src/data/maplist.js";
 
@@ -60,7 +60,7 @@ app.post("/spots/:mapName", async (req, res) => {
      const spotsUrl = url
           .pathToFileURL(
                path.resolve() +
-                    `/../CsgoSwiss/src/data/v2_spotSvyaz/${mapName}/spots_${mapName}.ts`
+                    `/../CsgoSwiss/src/data/content/${mapName}/spots_${mapName}.ts`
           )
           .toString();
      const spotsExported = await import(spotsUrl);
@@ -107,7 +107,7 @@ app.post("/spots/:mapName", async (req, res) => {
           const mapPath =
                path.resolve() +
                "/.." +
-               "/CsgoSwiss/src/data/v2_spotSvyaz/" +
+               "/CsgoSwiss/src/data/content/" +
                mapName +
                `/spots_${mapName}.ts`;
           console.log(103);
@@ -174,7 +174,7 @@ app.post("/lineups/:mapName", async (req, res) => {
      const lineupsUrl = url
           .pathToFileURL(
                path.resolve() +
-                    `/../CsgoSwiss/src/data/v2_spotSvyaz/${mapName}/lineups_${mapName}.ts`
+                    `/../CsgoSwiss/src/data/content/${mapName}/lineups_${mapName}.ts`
           )
           .toString();
      const lineupsExported = await import(lineupsUrl);
@@ -236,7 +236,7 @@ app.post("/lineups/:mapName", async (req, res) => {
           const mapPath =
                path.resolve() +
                "/.." +
-               "/CsgoSwiss/src/data/v2_spotSvyaz/" +
+               "/CsgoSwiss/src/data/content/" +
                mapName +
                `/lineups_${mapName}.ts`;
           const content = await fsAsync.readFile(mapPath, "utf-8");
