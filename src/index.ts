@@ -51,7 +51,10 @@ app.post("/spots/:mapName", async (req, res) => {
      const spotName = req.body.name;
      const coords = JSON.parse(req.body.coords);
      const toImgFile = req.files!.toImgFile as UploadedFile;
-     const fromImgFile = req.files!.fromImgFile as UploadedFile;
+     const toImg2File = req.files!.toImg2File as UploadedFile;
+     const fromImgFpFile = req.files!.fromImgFpFile as UploadedFile;
+     const fromImgTpFile = req.files!.fromImgFiTple as UploadedFile;
+     const priority = req.body.priority as "fp" | "tp";
 
      // Если не хватает полей
      if (!spotId || !spotName || !coords) {
@@ -72,34 +75,45 @@ app.post("/spots/:mapName", async (req, res) => {
                .status(409)
                .json({ error: "Another Spot has this identifier" });
      }
-
      const spotObj: Spot = {
           spotId,
           name: spotName,
           coords,
-          toImgSrc: null,
-          fromImgSrc: null,
      };
      const imgSrcFolder = `/CsgoSwiss/src/assets/content/spots/${mapName}/${spotName}`;
-     console.log(75);
      await fsAsync.mkdir(path.resolve() + "/.." + imgSrcFolder, {
           recursive: true,
      });
-     console.log(77);
+     if (fromImgFpFile || fromImgTpFile) {
+          if (priority == "fp" || priority == "tp") spotObj.priority = priority;
+          else
+               return res
+                    .status(400)
+                    .json({ error: "_from_ files provided without priority" });
+     }
      if (toImgFile) {
           const ext = path.extname(toImgFile.name);
           const toImgSrc = imgSrcFolder + `/to${spotName}${ext}`;
-          spotObj.toImgSrc = toImgSrc;
-          console.log(82);
+          spotObj.toSrc = toImgSrc;
           await toImgFile.mv(path.resolve() + "/.." + toImgSrc);
-          console.log(84);
      }
-     if (fromImgFile) {
-          const ext = path.extname(fromImgFile.name);
-          const fromImgSrc = imgSrcFolder + `/from${spotName}${ext}`;
-          spotObj.fromImgSrc = fromImgSrc;
-          await fromImgFile.mv(path.resolve() + "/.." + fromImgSrc);
-          console.log(91);
+     if (toImg2File) {
+          const ext = path.extname(toImg2File.name);
+          const toImgSrc2 = imgSrcFolder + `/to2${spotName}${ext}`;
+          spotObj.toSrc2 = toImgSrc2;
+          await toImgFile.mv(path.resolve() + "/.." + toImgSrc2);
+     }
+     if (fromImgFpFile) {
+          const ext = path.extname(fromImgFpFile.name);
+          const fromImgFpSrc = imgSrcFolder + `/from${spotName}${ext}`;
+          spotObj.fromSrc_fp = fromImgFpSrc;
+          await fromImgFpFile.mv(path.resolve() + "/.." + fromImgFpSrc);
+     }
+     if (fromImgTpFile) {
+          const ext = path.extname(fromImgTpFile.name);
+          const fromImgTpSrc = imgSrcFolder + `/from${spotName}${ext}`;
+          spotObj.fromSrc_tp = fromImgTpSrc;
+          await fromImgTpFile.mv(path.resolve() + "/.." + fromImgTpSrc);
      }
 
      spots.set(spotId, spotObj);
@@ -142,8 +156,9 @@ app.post("/lineups/:mapName", async (req, res) => {
      const toId = req.body.toId;
      const fromId = req.body.fromId;
      const imgFileAim = req.files!.imgFileAim as UploadedFile;
-     const imgFileAimZoom = req.files!.imgFileAimZoom as UploadedFile;
      const imgFileOverview = req.files!.imgFileOverview as UploadedFile;
+     const imgFileOverview2 = req.files!.imgFileOverview2 as UploadedFile;
+     const priority = req.body.priority;
      const nadeType = req.body.nadeType;
      const side = req.body.side;
      const tickrate = JSON.parse(req.body.tickrate);
@@ -160,7 +175,7 @@ app.post("/lineups/:mapName", async (req, res) => {
           !toId ||
           !fromId ||
           !lineupName ||
-          !(imgFileAim || imgFileAimZoom || imgFileOverview) ||
+          !(imgFileAim || imgFileOverview || imgFileOverview2) ||
           !nadeType ||
           !side ||
           !tickrate ||
@@ -193,9 +208,7 @@ app.post("/lineups/:mapName", async (req, res) => {
           lineupId,
           toId,
           fromId,
-          imgSrcAim: null,
-          imgSrcAimZoom: null,
-          imgSrcOverview: null,
+          name: lineupFileName,
           nadeType,
           side,
           tickrate,
@@ -215,20 +228,27 @@ app.post("/lineups/:mapName", async (req, res) => {
      if (imgFileAim) {
           const ext = path.extname(imgFileAim.name);
           const imgSrcAim = imgSrcFolder + `/aim${ext}`;
-          lineupObj.imgSrcAim = imgSrcAim;
+          lineupObj.srcAim = imgSrcAim;
           await imgFileAim.mv(path.resolve() + "/../CsgoSwiss" + imgSrcAim);
-     }
-     if (imgFileAimZoom) {
-          const ext = path.extname(imgFileAimZoom.name);
-          const imgSrcAimZoom = imgSrcFolder + `/aimZoom${ext}`;
-          lineupObj.imgSrcAimZoom = imgSrcAimZoom;
-          await imgFileAimZoom.mv(path.resolve() + "/../CsgoSwiss" + imgSrcAimZoom);
      }
      if (imgFileOverview) {
           const ext = path.extname(imgFileOverview.name);
           const imgSrcOverview = imgSrcFolder + `/overview${ext}`;
-          lineupObj.imgSrcOverview = imgSrcOverview;
-          await imgFileOverview.mv(path.resolve() + "/../CsgoSwiss" + imgSrcOverview);
+          lineupObj.srcOverview = imgSrcOverview;
+          await imgFileOverview.mv(
+               path.resolve() + "/../CsgoSwiss" + imgSrcOverview
+          );
+     }
+     if (imgFileOverview2) {
+          const ext = path.extname(imgFileOverview2.name);
+          const imgSrcOverview2 = imgSrcFolder + `/overview2${ext}`;
+          lineupObj.srcOverview2 = imgSrcOverview2;
+          await imgFileOverview2.mv(
+               path.resolve() + "/../CsgoSwiss" + imgSrcOverview2
+          );
+     }
+     if (imgFileOverview || imgFileOverview2) {
+          lineupObj.priority = priority;
      }
 
      lineups.set(lineupId, lineupObj);
@@ -246,10 +266,10 @@ app.post("/lineups/:mapName", async (req, res) => {
           let newLineupData =
                "    [\n" +
                `        "${lineupId}", // ${lineupName}\n` +
-               `        ${JSON.stringify(lineupObj)},\n`
-          newLineupData+= `    ],\n` + `]);\n`
-          const contat = lines.join('\n') +"\n" + newLineupData;
-          console.log('concat: ', contat);
+               `        ${JSON.stringify(lineupObj)},\n`;
+          newLineupData += `    ],\n` + `]);\n`;
+          const contat = lines.join("\n") + "\n" + newLineupData;
+          console.log("concat: ", contat);
           await fsAsync.writeFile(mapPath, contat);
           res.status(200).json({
                message: "created successfully",
