@@ -1,14 +1,20 @@
+// express
 import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
 import fileUpload, { UploadedFile } from "express-fileupload";
+//nodejs
 import fsAsync = require("fs/promises");
 import path from "path";
 import url from "url";
+//libs
+import camelCase from "camelcase";
+//csgoswiss
 import { Spot } from "../../CsgoSwiss/src/data/interfaces/Spot.js";
 import { Lineup } from "../../CsgoSwiss/src/data/interfaces/Lineup.js";
-import { CoordsObj } from "../../CsgoSwiss/src/data/types/GrenadeProperties.js";
 import mapListExport from "../../CsgoSwiss/src/data/maplist.js";
+//other
+import { paths } from "./paths.js";
 
 const app = express();
 app.use(express.json());
@@ -26,11 +32,6 @@ app.get("/:mapName", async (req, res) => {
      res.statusCode = 200;
      res.end();
 });
-/* app.post("/smokes", (req, res) => {
-    console.log(req.body);
-    res.statusCode=200
-    res.end()
-}); */
 
 function doesMapExits(mapName: string) {
      return (mapListExport.maplist as unknown as Array<string>).includes(
@@ -55,15 +56,15 @@ app.post("/spots/:mapName", async (req, res) => {
      const fromImgFpFile = req.files!.fromImgFpFile as UploadedFile;
      const fromImgTpFile = req.files!.fromImgFiTple as UploadedFile;
      const priority = req.body.priority as "fp" | "tp";
-
      // Если не хватает полей
      if (!spotId || !spotName || !coords) {
           return res.status(400).json({ error: "Invalid spot data" });
      }
+     const spotNameCamel = camelCase(spotName);
+     const spotNamePascal = camelCase(spotName, { pascalCase: true });
      const spotsUrl = url
           .pathToFileURL(
-               path.resolve() +
-                    `/../CsgoSwiss/src/data/content/${mapName}/spots_${mapName}.ts`
+               paths.contentFolderAbs + `/${mapName}/spots_${mapName}.ts`
           )
           .toString();
      const spotsExported = await import(spotsUrl);
@@ -80,54 +81,50 @@ app.post("/spots/:mapName", async (req, res) => {
           name: spotName,
           coords,
      };
-     const imgSrcFolder = `/CsgoSwiss/src/assets/content/spots/${mapName}/${spotName}`;
-     await fsAsync.mkdir(path.resolve() + "/.." + imgSrcFolder, {
-          recursive: true,
-     });
+     const newSpotAssetFolder_abs =
+          paths.assetSpotsAbs + `/${mapName}/${spotNameCamel}`;
+
+     await fsAsync.mkdir(newSpotAssetFolder_abs, { recursive: true });
      if (fromImgFpFile || fromImgTpFile) {
           if (priority == "fp" || priority == "tp") spotObj.priority = priority;
           else
                return res
                     .status(400)
-                    .json({ error: "_from_ files provided without priority" });
+                    .json({ error: "*from* files provided without priority" });
      }
      if (toImgFile) {
           const ext = path.extname(toImgFile.name);
-          const toImgSrc = imgSrcFolder + `/to${spotName}${ext}`;
-          spotObj.toSrc = toImgSrc;
-          await toImgFile.mv(path.resolve() + "/.." + toImgSrc);
+          const srcName = `/to${spotNamePascal}${ext}`;
+          spotObj.toSrc = srcName;
+          await toImgFile.mv(newSpotAssetFolder_abs + srcName);
      }
      if (toImg2File) {
           const ext = path.extname(toImg2File.name);
-          const toImgSrc2 = imgSrcFolder + `/to2${spotName}${ext}`;
-          spotObj.toSrc2 = toImgSrc2;
-          await toImgFile.mv(path.resolve() + "/.." + toImgSrc2);
+          const srcName = `/to2${spotNamePascal}${ext}`;
+          spotObj.toSrc2 = srcName;
+          await toImgFile.mv(newSpotAssetFolder_abs + srcName);
      }
      if (fromImgFpFile) {
           const ext = path.extname(fromImgFpFile.name);
-          const fromImgFpSrc = imgSrcFolder + `/from${spotName}${ext}`;
-          spotObj.fromSrc_fp = fromImgFpSrc;
-          await fromImgFpFile.mv(path.resolve() + "/.." + fromImgFpSrc);
+          const srcName = `/from${spotNamePascal}${ext}`;
+          spotObj.fromSrc_fp = srcName;
+          await fromImgFpFile.mv(newSpotAssetFolder_abs + srcName);
      }
      if (fromImgTpFile) {
           const ext = path.extname(fromImgTpFile.name);
-          const fromImgTpSrc = imgSrcFolder + `/from${spotName}${ext}`;
-          spotObj.fromSrc_tp = fromImgTpSrc;
-          await fromImgTpFile.mv(path.resolve() + "/.." + fromImgTpSrc);
+          const srcName = `/from${spotNamePascal}${ext}`;
+          spotObj.fromSrc_tp = srcName;
+          await fromImgTpFile.mv(newSpotAssetFolder_abs + srcName);
      }
 
      spots.set(spotId, spotObj);
      try {
           const mapPath =
-               path.resolve() +
-               "/.." +
-               "/CsgoSwiss/src/data/content/" +
-               mapName +
-               `/spots_${mapName}.ts`;
+               paths.contentFolderAbs + "/" + mapName + `/spots_${mapName}.ts`;
           console.log(103);
           await fsAsync.writeFile(
                mapPath,
-               `import type { Spot } from "../Spot";
+               `import type { Spot } from "../../interfaces/Spot";
                \nexport const spots_${mapName} = new Map<Spot["spotId"], Spot>(${JSON.stringify(
                     [...spots]
                )})`
