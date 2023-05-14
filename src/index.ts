@@ -134,9 +134,7 @@ app.post("/spots/:mapName", async (req, res) => {
                spotId: spotId,
           });
      } catch (err) {
-          res.status(500).json({
-               error: err,
-          });
+          res.status(500).json({ error: err });
           console.log("error occured", err);
      }
      return res.end();
@@ -181,12 +179,11 @@ app.post("/lineups/:mapName", async (req, res) => {
           !throwMovement ||
           !difficulty
      ) {
-          return res.status(400).json({ error: "Invalid spot data" });
+          return res.status(400).json({ error: "Invalid lineup data" });
      }
      const lineupsUrl = url
           .pathToFileURL(
-               path.resolve() +
-                    `/../CsgoSwiss/src/data/content/${mapName}/lineups_${mapName}.ts`
+               paths.contentFolderAbs + `/${mapName}/lineups_${mapName}.ts`
           )
           .toString();
      const lineupsExported = await import(lineupsUrl);
@@ -217,32 +214,27 @@ app.post("/lineups/:mapName", async (req, res) => {
      if (forWhom) {
           lineupObj.forWhom = forWhom;
      }
-     const imgSrcFolder = `/src/assets/content/lineups/${mapName}/${lineupFileName}`;
-     // console.log("lineups: ", [...lineups]);
-     await fsAsync.mkdir(path.resolve() + "/../CsgoSwiss" + imgSrcFolder, {
-          recursive: true,
-     });
+
+     const newLineupAssetFolder_abs =
+          paths.assetLineupsAbs + `/${mapName}/${lineupFileName}`;
+     await fsAsync.mkdir(newLineupAssetFolder_abs, { recursive: true });
      if (imgFileAim) {
           const ext = path.extname(imgFileAim.name);
-          const imgSrcAim = imgSrcFolder + `/aim${ext}`;
-          lineupObj.srcAim = imgSrcAim;
-          await imgFileAim.mv(path.resolve() + "/../CsgoSwiss" + imgSrcAim);
+          const srcName = `/aim${ext}`;
+          lineupObj.srcAim = srcName;
+          await imgFileAim.mv(newLineupAssetFolder_abs + srcName);
      }
      if (imgFileOverview) {
           const ext = path.extname(imgFileOverview.name);
-          const imgSrcOverview = imgSrcFolder + `/overview${ext}`;
-          lineupObj.srcOverview = imgSrcOverview;
-          await imgFileOverview.mv(
-               path.resolve() + "/../CsgoSwiss" + imgSrcOverview
-          );
+          const srcName = `/overview${ext}`;
+          lineupObj.srcOverview = srcName;
+          await imgFileOverview.mv(newLineupAssetFolder_abs + srcName);
      }
      if (imgFileOverview2) {
           const ext = path.extname(imgFileOverview2.name);
-          const imgSrcOverview2 = imgSrcFolder + `/overview2${ext}`;
-          lineupObj.srcOverview2 = imgSrcOverview2;
-          await imgFileOverview2.mv(
-               path.resolve() + "/../CsgoSwiss" + imgSrcOverview2
-          );
+          const srcName = `/overview2${ext}`;
+          lineupObj.srcOverview2 = srcName;
+          await imgFileOverview2.mv(newLineupAssetFolder_abs + srcName);
      }
      if (imgFileOverview || imgFileOverview2) {
           lineupObj.priority = priority;
@@ -250,12 +242,7 @@ app.post("/lineups/:mapName", async (req, res) => {
 
      lineups.set(lineupId, lineupObj);
      try {
-          const mapPath =
-               path.resolve() +
-               "/.." +
-               "/CsgoSwiss/src/data/content/" +
-               mapName +
-               `/lineups_${mapName}.ts`;
+          const mapPath = `${paths.contentFolderAbs}/${mapName}/lineups_${mapName}.ts`;
           const content = await fsAsync.readFile(mapPath, "utf-8");
           const lines = content.split("\n");
           lines.pop();
