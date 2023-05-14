@@ -54,14 +54,13 @@ app.post("/spots/:mapName", async (req, res) => {
      const toImgFile = req.files!.toImgFile as UploadedFile;
      const toImg2File = req.files!.toImg2File as UploadedFile;
      const fromImgFpFile = req.files!.fromImgFpFile as UploadedFile;
-     const fromImgTpFile = req.files!.fromImgFiTple as UploadedFile;
+     const fromImgTpFile = req.files!.fromImgTpFile as UploadedFile;
      const priority = req.body.priority as "fp" | "tp";
      // Если не хватает полей
      if (!spotId || !spotName || !coords) {
           return res.status(400).json({ error: "Invalid spot data" });
      }
      const spotNameCamel = camelCase(spotName);
-     const spotNamePascal = camelCase(spotName, { pascalCase: true });
      const spotsUrl = url
           .pathToFileURL(
                paths.contentFolderAbs + `/${mapName}/spots_${mapName}.ts`
@@ -94,25 +93,25 @@ app.post("/spots/:mapName", async (req, res) => {
      }
      if (toImgFile) {
           const ext = path.extname(toImgFile.name);
-          const srcName = `/to${spotNamePascal}${ext}`;
+          const srcName = `/to_${spotNameCamel}${ext}`;
           spotObj.toSrc = srcName;
           await toImgFile.mv(newSpotAssetFolder_abs + srcName);
      }
      if (toImg2File) {
           const ext = path.extname(toImg2File.name);
-          const srcName = `/to2${spotNamePascal}${ext}`;
+          const srcName = `/to2_${spotNameCamel}${ext}`;
           spotObj.toSrc2 = srcName;
           await toImgFile.mv(newSpotAssetFolder_abs + srcName);
      }
      if (fromImgFpFile) {
           const ext = path.extname(fromImgFpFile.name);
-          const srcName = `/from${spotNamePascal}${ext}`;
+          const srcName = `/fromFp_${spotNameCamel}${ext}`;
           spotObj.fromSrc_fp = srcName;
           await fromImgFpFile.mv(newSpotAssetFolder_abs + srcName);
      }
      if (fromImgTpFile) {
           const ext = path.extname(fromImgTpFile.name);
-          const srcName = `/from${spotNamePascal}${ext}`;
+          const srcName = `/fromTp_${spotNameCamel}${ext}`;
           spotObj.fromSrc_tp = srcName;
           await fromImgTpFile.mv(newSpotAssetFolder_abs + srcName);
      }
@@ -129,15 +128,14 @@ app.post("/spots/:mapName", async (req, res) => {
                     [...spots]
                )})`
           );
-          res.status(200).json({
+          return res.status(200).json({
                message: "created successfully",
                spotId: spotId,
           });
      } catch (err) {
-          res.status(500).json({ error: err });
           console.log("error occured", err);
+          return res.status(500).json({ error: err });
      }
-     return res.end();
 });
 
 app.post("/lineups/:mapName", async (req, res) => {
@@ -153,7 +151,7 @@ app.post("/lineups/:mapName", async (req, res) => {
      const imgFileAim = req.files!.imgFileAim as UploadedFile;
      const imgFileOverview = req.files!.imgFileOverview as UploadedFile;
      const imgFileOverview2 = req.files!.imgFileOverview2 as UploadedFile;
-     const priority = req.body.priority;
+     const priority = Number(req.body.priority) as 1 | 2;
      const nadeType = req.body.nadeType;
      const side = req.body.side;
      const tickrate = JSON.parse(req.body.tickrate);
