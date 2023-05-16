@@ -40,6 +40,8 @@ function doesMapExits(mapName: string) {
           ? true
           : false;
 }
+
+let exportedspots:any = {}
 app.post("/spots/:mapName", async (req, res) => {
      const { mapName } = req.params;
      // Если mapList содержит адрес(дин. параметр), на который отправлен запрос
@@ -66,9 +68,11 @@ app.post("/spots/:mapName", async (req, res) => {
                paths.contentFolderAbs + `/${mapName}/spots_${mapName}.ts`
           )
           .toString();
-     const spotsExported = await import(spotsUrl);
-     console.log(60, spotsExported);
-     const spots = spotsExported["default"][`spots_${mapName}`];
+     const now = Date.now()
+     exportedspots[now] = await import(spotsUrl);
+     console.log(73, exportedspots[now]);
+     const spots = exportedspots[now]["default"][`spots_${mapName}`];
+     console.log(75, spots);
      // Если спот id уже существует
      if (spots.has(spotId)) {
           return res
@@ -115,7 +119,7 @@ app.post("/spots/:mapName", async (req, res) => {
           spotObj.fromSrc_tp = srcName;
           await fromImgTpFile.mv(newSpotAssetFolder_abs + srcName);
      }
-
+     console.log(122);
      spots.set(spotId, spotObj);
      try {
           const mapPath =
@@ -128,6 +132,9 @@ app.post("/spots/:mapName", async (req, res) => {
                     [...spots]
                )})`
           );
+          console.log(135, exportedspots[now]);
+          console.log(136, spots);
+          delete exportedspots[now];
           return res.status(200).json({
                message: "created successfully",
                spotId: spotId,
@@ -138,6 +145,7 @@ app.post("/spots/:mapName", async (req, res) => {
      }
 });
 
+let exportedlineups: any = {};
 app.post("/lineups/:mapName", async (req, res) => {
      const { mapName } = req.params;
      if (!doesMapExits(mapName)) {
@@ -184,11 +192,11 @@ app.post("/lineups/:mapName", async (req, res) => {
                paths.contentFolderAbs + `/${mapName}/lineups_${mapName}.ts`
           )
           .toString();
-     const lineupsExported = await import(lineupsUrl);
-     const lineups = lineupsExported["default"][`lineups_${mapName}`] as Map<
-          Lineup["lineupId"],
-          Lineup
-     >;
+     const now = Date.now()
+     exportedlineups[now] = await import(lineupsUrl);
+     const lineups = exportedlineups[now]["default"][
+          `lineups_${mapName}`
+     ] as Map<Lineup["lineupId"], Lineup>;
      // Если лайнап id уже существует
      if (lineups.has(lineupId)) {
           return res
@@ -253,6 +261,7 @@ app.post("/lineups/:mapName", async (req, res) => {
           const contat = lines.join("\n") + "\n" + newLineupData;
           console.log("concat: ", contat);
           await fsAsync.writeFile(mapPath, contat);
+          delete exportedlineups[now];
           res.status(200).json({
                message: "created successfully",
                lineupId: lineupId,
